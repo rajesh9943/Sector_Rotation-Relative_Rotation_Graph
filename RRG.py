@@ -620,15 +620,15 @@ def main():
         )
 
         tail_length = st.slider("Tail Length (days)", min_value=2, max_value=30, value=10, step=1,
-                               help="Number of historical points to show in the trail")
+                            help="Number of historical points to show in the trail")
         
         enable_animation = st.checkbox("Enable Animation", value=False, 
-                                      help="Animate sector movement over time (shows how sectors rotate through quadrants)")
+                                    help="Animate sector movement over time (shows how sectors rotate through quadrants)")
         
         if enable_animation:
             animation_speed = st.slider("Animation Speed (ms per frame)", 
-                                       min_value=200, max_value=2000, value=800, step=100,
-                                       help="Control animation speed (lower = faster)")
+                                    min_value=200, max_value=2000, value=800, step=100,
+                                    help="Control animation speed (lower = faster)")
 
     with col2:
         default_sectors = ["^NSEBANK", "^CNXIT", "^CNXPHARMA", "^CNXFMCG", "^CNXAUTO", "^CNXMETAL", "^CNXMEDIA", "^CNXREALTY", "^CNXINFRA", "^CNXENERGY", "^CNXPSUBANK", "^CNXPSE", "^CNXCONSUM", "^CNX100", "^CNX200", "^CRSLDX", "^NSMIDCP"]
