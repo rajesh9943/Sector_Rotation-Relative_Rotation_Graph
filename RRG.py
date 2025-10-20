@@ -38,7 +38,7 @@ def fetch_data(symbols, period_days, interval="1d"):
         try:
             hist = yf.download(symbol, start_date, end_date, interval=interval, multi_level_index=False, progress=False)
 
-            if len(hist) < 20:  # Minimum data requirement
+            if len(hist) < 10:  # Reduced minimum data requirement
                 failed_symbols.append(symbol)
                 continue
 
@@ -54,7 +54,7 @@ def calculate_relative_strength(price_data, benchmark_data, period):
     """Calculate relative strength vs benchmark"""
     # Ensure we have enough data
     min_length = min(len(price_data), len(benchmark_data))
-    if min_length < period:
+    if min_length < max(period, 5):  # Minimum 5 days for calculation
         return None, None
 
     # Align data by index
@@ -63,7 +63,7 @@ def calculate_relative_strength(price_data, benchmark_data, period):
         'benchmark': benchmark_data
     }).dropna()
 
-    if len(aligned_data) < period:
+    if len(aligned_data) < max(period, 5):
         return None, None
 
     # Calculate relative strength (sector/benchmark)
@@ -75,13 +75,13 @@ def calculate_relative_strength(price_data, benchmark_data, period):
     return relative_strength, rs_momentum
 
 
-def calculate_jdk_rs_ratio(relative_strength, short_period=10, long_period=30):
+def calculate_jdk_rs_ratio(relative_strength, short_period=5, long_period=10):
     """Calculate JdK RS-Ratio similar to RRG methodology
     
     Official formula: RS-Ratio = (RS / MA(RS, long_period)) * 100
     where RS = Price_Sector / Price_Benchmark
     
-    Note: Standard RRG uses 10 and 30 periods for daily data
+    Note: Adjusted periods for shorter timeframes
     """
     if len(relative_strength) < long_period:
         return None
@@ -96,7 +96,7 @@ def calculate_jdk_rs_ratio(relative_strength, short_period=10, long_period=30):
     return rs_ratio
 
 
-def calculate_jdk_rs_momentum(rs_ratio, period=10):
+def calculate_jdk_rs_momentum(rs_ratio, period=5):
     """Calculate JdK RS-Momentum
     
     Official formula: RS-Momentum = ((RS-Ratio / MA(RS-Ratio, period)) - 1) * 100
@@ -160,7 +160,11 @@ def create_animated_rrg_plot(results, animation_period_days, animation_speed=800
         return None
     
     # Sample dates based on animation period
-    if animation_period_days == 90:  # 3 months - every 2-3 days
+    if animation_period_days <= 7:  # 1 day to 1 week - daily
+        step = 1
+    elif animation_period_days <= 30:  # 1 month - every 2 days
+        step = 2
+    elif animation_period_days == 90:  # 3 months - every 3 days
         step = 3
     elif animation_period_days == 180:  # 6 months - weekly
         step = 5
@@ -490,7 +494,7 @@ def create_static_rrg_plot(results, tail_length, show_tail=False, enable_smoothi
 
         tail_points = min(tail_length, len(rs_ratio))
 
-        if tail_points < 2:
+        if tail_points < 1:  # Allow single point
             continue
 
         x_vals = rs_ratio.tail(tail_points).values
@@ -498,7 +502,7 @@ def create_static_rrg_plot(results, tail_length, show_tail=False, enable_smoothi
 
         color = colors[i % len(colors)]
 
-        if show_tail:
+        if show_tail and tail_points > 1:
             fig.add_trace(go.Scatter(
                 x=x_vals,
                 y=y_vals,
@@ -583,7 +587,8 @@ def main():
             "Nifty 100": "^CNX100",
             "Nifty 200": "^CNX200",
             "Nifty 500": "^CRSLDX",
-            "Nifty Next 50 (Junior)": "^NSMIDCP"
+            "Nifty Next 50 (Junior)": "^NSMIDCP",
+            "Nifty Midcap 50": "^NSEMDCP50",
         }
         benchmark_names = list(benchmark_map.keys())
         selected_benchmark_name = st.selectbox(
@@ -595,6 +600,9 @@ def main():
         benchmark = benchmark_map[selected_benchmark_name]
 
         period_options = {
+            "1 Day": 1,
+            "5 Days": 5,  # Changed from "1 Week": 7
+            "1 Month": 30,
             "3 Months": 90,
             "6 Months": 180,
             "1 Year": 365,
@@ -605,7 +613,7 @@ def main():
         selected_period = st.selectbox(
             "Analysis Period",
             options=list(period_options.keys()),
-            index=0,
+            index=3,  # Default to 3 months to avoid errors
             help="Select the time period for analysis"
         )
         
@@ -631,16 +639,23 @@ def main():
                                     help="Control animation speed (lower = faster)")
 
     with col2:
-        default_sectors = ["^NSEBANK", "^CNXIT", "^CNXPHARMA", "^CNXFMCG", "^CNXAUTO", "^CNXMETAL", "^CNXMEDIA", "^CNXREALTY", "^CNXINFRA", "^CNXENERGY", "^CNXPSUBANK", "^CNXPSE", "^CNXCONSUM", "^CNX100", "^CNX200", "^CRSLDX", "^NSMIDCP"]
+        # Initialize session state for sectors text
+        if 'sectors_text' not in st.session_state:
+            default_sectors = ["^NSEBANK", "^CNXIT", "^CNXPHARMA", "^CNXFMCG", "^CNXAUTO", "^CNXMETAL", "^CNXMEDIA", "^CNXREALTY", "^CNXINFRA", "^CNXENERGY", "^CNXPSUBANK", "^CNXPSE", "^CNXCONSUM", "^CNX100", "^CNX200", "^CRSLDX", "^NSMIDCP", "^NSEMDCP50"]
+            st.session_state.sectors_text = "\n".join(default_sectors)
 
+        # Text area for sectors input
         sectors_text = st.text_area(
             "Enter Sector/Stock symbols (one per line)",
-            value="\n".join(default_sectors),
+            value=st.session_state.sectors_text,
             height=220,
+            key="sectors_text_area",
             help="Enter each sector/stock symbol on a new line"
         )
-
-        sectors = [s.strip() for s in sectors_text.split('\n') if s.strip()]
+        # Update session state when text changes
+        st.session_state.sectors_text = sectors_text
+        
+        sectors = [s.strip() for s in st.session_state.sectors_text.split('\n') if s.strip()]
 
         if not enable_animation:
             show_tail = st.checkbox(label="Show Tail", value=True, help="Display the historical trajectory of each sector")
@@ -669,13 +684,27 @@ def main():
             results = {}
             benchmark_prices = benchmark_data[benchmark]
 
+            # Adjust calculation parameters based on period
+            if period <= 7:  # 1 day or 5 days
+                calc_period = 1
+                rs_period_short = 3
+                rs_period_long = 5
+            elif period <= 30:  # 1 month
+                calc_period = 3
+                rs_period_short = 5
+                rs_period_long = 8
+            else:  # Longer periods
+                calc_period = 10
+                rs_period_short = 10
+                rs_period_long = 30
+
             for symbol, prices in sector_data.items():
                 try:
-                    rel_strength, rel_momentum = calculate_relative_strength(prices, benchmark_prices, 10)
+                    rel_strength, rel_momentum = calculate_relative_strength(prices, benchmark_prices, calc_period)
 
                     if rel_strength is not None:
-                        rs_ratio = calculate_jdk_rs_ratio(rel_strength)
-                        rs_momentum = calculate_jdk_rs_momentum(rs_ratio)
+                        rs_ratio = calculate_jdk_rs_ratio(rel_strength, rs_period_short, rs_period_long)
+                        rs_momentum = calculate_jdk_rs_momentum(rs_ratio, calc_period)
 
                         results[symbol] = {
                             'rs_ratio': rs_ratio,
