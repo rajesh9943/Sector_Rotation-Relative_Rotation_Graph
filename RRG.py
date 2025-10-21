@@ -589,7 +589,6 @@ def main():
             "Nifty 500": "^CRSLDX",
             "Nifty Next 50 (Junior)": "^NSMIDCP",
             "Nifty Midcap 50": "^NSEMDCP50",
-            "Nifty Oil & Gas": "^NIFTY_OIL_AND_GAS.NS",
         }
         benchmark_names = list(benchmark_map.keys())
         selected_benchmark_name = st.selectbox(
@@ -642,7 +641,7 @@ def main():
     with col2:
         # Initialize session state for sectors text
         if 'sectors_text' not in st.session_state:
-            default_sectors = ["^NSEBANK", "^CNXIT", "^CNXPHARMA", "^CNXFMCG", "^CNXAUTO", "^CNXMETAL", "^CNXMEDIA", "^CNXREALTY", "^CNXINFRA", "^CNXENERGY", "^CNXPSUBANK", "^CNXPSE", "^CNXCONSUM", "^NIFTY_OIL_AND_GAS.NS", "^CNX100", "^CNX200", "^CRSLDX", "^NSMIDCP", "^NSEMDCP50"]
+            default_sectors = ["^NSEBANK", "^CNXIT", "^CNXPHARMA", "^CNXFMCG", "^CNXAUTO", "^CNXMETAL", "^CNXMEDIA", "^CNXREALTY", "^CNXINFRA", "^CNXENERGY", "^CNXPSUBANK", "^CNXPSE", "^CNXCONSUM", "^CNX100", "^CNX200", "^CRSLDX", "^NSMIDCP", "^NSEMDCP50"]
             st.session_state.sectors_text = "\n".join(default_sectors)
 
         # Text area for sectors input
@@ -813,4 +812,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
