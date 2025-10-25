@@ -627,7 +627,7 @@ def main():
             help="Select daily or weekly data granularity"
         )
 
-        tail_length = st.slider("Tail Length (days)", min_value=2, max_value=30, value=10, step=1,
+        tail_length = st.slider("Count Days", min_value=2, max_value=30, value=10, step=1,
                             help="Number of historical points to show in the trail")
         
         enable_animation = st.checkbox("Enable Animation", value=False, 
@@ -812,5 +812,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
