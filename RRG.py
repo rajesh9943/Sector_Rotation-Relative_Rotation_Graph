@@ -377,8 +377,7 @@ def main():
 
     with col2:
         # Sectors input
-        default_sectors = ["^CNXAUTO", "^CNXPHARMA", "^CNXMETAL", "^CNXIT", "^CNXENERGY", "^CNXREALTY", "^CNXPSUBANK",
-                           "^CNXMEDIA", "^CNXINFRA", "^CNXPSE", "RELIANCE.NS", "INFY.NS"]
+        default_sectors = ["^NSEI","^NSEBANK","^CNXIT","^CNXPHARMA","^CNXFMCG","^CNXAUTO","^CNXMETAL","^CNXMEDIA","^CNXREALTY","^CNXINFRA","^CNXENERGY","^CNXPSUBANK","^CNXPSE","^CNXCONSUM","^CNX100","^CNX200","^CRSLDX","^NSMIDCP"]
 
         sectors_text = st.text_area(
             "Enter Sector/Stock symbols (one per line)",
